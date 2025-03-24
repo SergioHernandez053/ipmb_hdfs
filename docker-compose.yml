@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  namenode:
+    image: bde2020/hadoop-namenode:latest
+    container_name: namenode
+    environment:
+      - CLUSTER_NAME=test_cluster
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    networks:
+      - bigdata
+
+  datanode:
+    image: bde2020/hadoop-datanode:latest
+    container_name: datanode
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+    depends_on:
+      - namenode
+    networks:
+      - bigdata
+
+  hive-metastore:
+    image: bde2020/hive:latest
+    container_name: hive-metastore
+    depends_on:
+      - namenode
+      - datanode
+    environment:
+      - SERVICE_NAME=metastore
+    networks:
+      - bigdata
+
+  hive-server:
+    image: bde2020/hive:latest
+    container_name: hive-server
+    depends_on:
+      - hive-metastore
+    environment:
+      - SERVICE_NAME=hiveserver2
+    ports:
+      - "10000:10000"
+    networks:
+      - bigdata
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=hive_results
+    ports:
+      - "3306:3306"
+    networks:
+      - bigdata
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - bigdata
+    depends_on:
+      - mysql
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  data-loader:
+    image: python:3.9
+    container_name: data-loader
+    volumes:
+      - ./scripts:/scripts
+    depends_on:
+      - hive-server
+      - mysql
+    networks:
+      - bigdata
+    command: ["python", "/scripts/load_data.py"]
+
+volumes:
+  hadoop_namenode:
+  mysql_data:
+  grafana_data:
+
+networks:
+  bigdata:
