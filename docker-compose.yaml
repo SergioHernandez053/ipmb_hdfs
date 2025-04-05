@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  namenode:
+    build: 
+      context: .
+      dockerfile: hdfs_config/Dockerfile
+    container_name: namenode
+    restart: always
+    volumes:
+      - ./userdata:/userdata
+      - ./metadata:/metadata
+      - ./hdfs_config/init_hdfs.sh:/init_hdfs.sh
+    environment:
+      - CLUSTER_NAME=hive
+    env_file:
+      - ./hadoop-hive.env
+    ports:
+      - "50070:50070"
+    command: ["hdfs", "namenode"]
+    networks:
+      - hadoop-net
+    #entrypoint: ["/bin/bash", "-c", "/init_hdfs.sh"]
+
+  datanode:
+    build: 
+      context: .
+      dockerfile: hdfs_config/Dockerfile
+    container_name: datanode
+    volumes:
+      - ./userdata:/userdata
+      - ./metadata:/metadata
+      - ./hdfs_config/init_hdfs.sh:/init_hdfs.sh
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070"
+    depends_on:
+      - namenode
+    command: ["hdfs", "datanode"]
+    ports:
+      - "50075:50075"
+    networks:
+      - hadoop-net
+
+  hive-server:
+    build: 
+      context: .
+      dockerfile: hive/Dockerfile
+    container_name: hive-server
+    depends_on:
+      - namenode
+    ports:
+      - "10000:10000"
+      - "10002:10002"
+    networks:
+      - hadoop-net
+    environment:
+      - SERVICE_NAME=hiveserver2
+      - HIVE_METASTORE_URI=thrift://metastore:9083
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=hive_results
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - hadoop-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mysql
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources/datasource.yaml:/etc/grafana/provisioning/datasources/default.yaml
+      - ./grafana/provisioning/dashboards/dashboard.yaml:/etc/grafana/provisioning/dashboards/default.yaml
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - hadoop-net
+
+  exporter:
+    container_name: exporter
+    build:
+      context: ./exporter
+      dockerfile: Dockerfile
+    depends_on:
+      - hive-server
+      - mysql
+    restart: always
+    networks:
+      - hadoop-net
+
+volumes:
+  hdfs_data:
+  mysql_data:
+  grafana_data:
+networks:
+  hadoop-net: 
+    driver: bridge

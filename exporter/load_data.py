@@ -1,13 +1,15 @@
 import mysql.connector
 from pyhdfs import HdfsClient
 import csv
+import time
 
-# Configuración de HDFS
+# Esperar a que HDFS esté listo
+time.sleep(20)
+
 HDFS_HOST = "namenode"
 HDFS_PORT = 50070
 HDFS_FILE_PATH = "/user/hive/warehouse/summary.csv"
 
-# Configuración de MySQL
 MYSQL_HOST = "mysql"
 MYSQL_USER = "root"
 MYSQL_PASSWORD = "root"

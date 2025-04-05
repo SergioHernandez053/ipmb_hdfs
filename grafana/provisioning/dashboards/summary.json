@@ -1,0 +1,17 @@
+{
+  "dashboard": {
+    "title": "Hive Summary",
+    "panels": [
+      {
+        "type": "table",
+        "title": "Users by Country",
+        "targets": [
+          {
+            "rawSql": "SELECT country, user_count FROM summary ORDER BY user_count DESC;",
+            "format": "table"
+          }
+        ]
+      }
+    ]
+  }
+}
