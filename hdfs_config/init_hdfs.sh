@@ -1,12 +1,16 @@
 #!/bin/bash
-sleep 5
 hdfs namenode
 
 
-hdfs dfs -mkdir -p /user/hive/warehouse/userdata
-hdfs dfs -chmod 777 /user/hive/warehouse/userdata  # Ajusta permisos
-hdfs dfs -mkdir -p /user/hive/warehouse/metadata
-hdfs dfs -chmod 777 /user/hive/warehouse/metadata
+#hdfs dfs -mkdir -p hdfs://namenode/user/hive/warehouse/userdata
+#hdfs dfs -chmod 777 hdfs://namenode/user/hive/warehouse/userdata  # Ajusta permisos
+#hdfs dfs -mkdir -p hdfs://namenode/user/hive/warehouse/metadata
+#hdfs dfs -chmod 777 hdfs://namenode/user/hive/warehouse/metadata
 
-hdfs dfs -put /userdata/* /user/hive/warehouse/userdata/
-hdfs dfs -put /metadata/* /user/hive/warehouse/metadata/
+hdfs dfs -mkdir -p hdfs://namenode/user/hive/warehouse/userdata
+hdfs dfs -chown hive hdfs://namenode/user/hive/warehouse/userdata  # Ajusta permisos
+hdfs dfs -mkdir -p hdfs://namenode/user/hive/warehouse/metadata
+hdfs dfs -chown hive hdfs://namenode/user/hive/warehouse/metadata
+
+hdfs dfs -put /userdata/* hdfs://namenode/user/hive/warehouse/userdata/
+hdfs dfs -put /metadata/* hdfs://namenode/user/hive/warehouse/metadata/

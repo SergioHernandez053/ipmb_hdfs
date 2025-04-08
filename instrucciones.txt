@@ -1,0 +1,27 @@
+docker exec -it mysql bash
+mysql -u root -p hive_results < /docker-entrypoint-initdb.d/init.sql
+contraseña: root
+docker exec -it namenode ./init_hdfs.sh
+docker exec -it hive-server beeline -u jdbc:hive2://localhost:10000/ -f ./init_hive.sql
+docker execdocker exec -it exporter python3 export_hive_mysql.py
+docker exec mysql mysql --user=root --password=root --table hive_results -e "SELECT * FROM summary"
+
+Para crear dashboard grafana: 
+ir a grafana,
+data souces,
+poner mysql
+poner datos:
+database hive_results
+host: mysql:3306
+user root
+password root
+save and exit
+
+Luego ir a dashboard:
+crear un nuevo dashboard,
+poner pie chart
+ir abajo y seleccionar donut en vez de pie
+en las columnas poner country y usercount
+poner group by country
+en value options panel derecho poner All Values
+guardar

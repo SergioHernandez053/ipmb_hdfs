@@ -5,6 +5,7 @@ services:
     build: 
       context: .
       dockerfile: hdfs_config/Dockerfile
+    hostname: namenode
     container_name: namenode
     restart: always
     volumes:
@@ -20,7 +21,6 @@ services:
     command: ["hdfs", "namenode"]
     networks:
       - hadoop-net
-    #entrypoint: ["/bin/bash", "-c", "/init_hdfs.sh"]
 
   datanode:
     build: 
@@ -60,7 +60,7 @@ services:
       - HIVE_METASTORE_URI=thrift://metastore:9083
 
   mysql:
-    image: mysql:5.7
+    image: mysql:8.0
     container_name: mysql
     environment:
       - MYSQL_ROOT_PASSWORD=root
@@ -69,21 +69,21 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./sql:/docker-entrypoint-initdb.d/
     networks:
       - hadoop-net
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana
     container_name: grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
     ports:
       - "3000:3000"
     depends_on:
       - mysql
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning/datasources/datasource.yaml:/etc/grafana/provisioning/datasources/default.yaml
-      - ./grafana/provisioning/dashboards/dashboard.yaml:/etc/grafana/provisioning/dashboards/default.yaml
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
     networks:
       - hadoop-net
 
